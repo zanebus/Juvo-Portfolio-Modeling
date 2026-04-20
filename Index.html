@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EdTech / FoW VC Portfolio Model</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; font-size: 13px; padding: 20px 24px; background: #ffffff; color: #1a1a1a; max-width: 1000px; margin: 0 auto; }
+  input[type=number] { width: 100%; padding: 5px 7px; font-size: 12px; border: 0.5px solid rgba(128,128,128,0.3); border-radius: 6px; background: transparent; color: inherit; }
+  input[type=range] { width: 100%; accent-color: #378ADD; }
+  button { cursor: pointer; background: transparent; color: inherit; border: 0.5px solid rgba(128,128,128,0.35); border-radius: 6px; font-size: 12px; padding: 4px 12px; }
+  button.active { background: rgba(128,128,128,0.13); font-weight: 500; }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .card { background: rgba(128,128,128,0.07); border-radius: 10px; padding: 10px 12px; }
+  .stage-card { background: rgba(128,128,128,0.06); border-radius: 12px; padding: 14px; }
+  .divider { border-top: 0.5px solid rgba(128,128,128,0.18); margin: 16px 0; }
+  .fo-divider { border-top: 0.5px dashed rgba(128,128,128,0.25); margin-top: 10px; padding-top: 10px; }
+  .section-label { font-size: 10px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: #999; margin-bottom: 8px; }
+  .field-label { font-size: 11px; color: #888; display: block; margin-bottom: 3px; }
+  .field-note  { font-size: 9px; color: #aaa; }
+  .pill { font-size: 11px; font-weight: 500; padding: 2px 10px; border-radius: 99px; display: inline-block; margin-bottom: 10px; }
+  .muted { color: #888; }
+  .tiny { font-size: 10px; color: #aaa; line-height: 1.4; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { text-align: left; font-size: 10px; color: #888; font-weight: 500; padding: 4px 7px; border-bottom: 0.5px solid rgba(128,128,128,0.2); }
+  td { padding: 5px 7px; border-bottom: 0.5px solid rgba(128,128,128,0.1); }
+  .bar-wrap { display: flex; align-items: flex-end; gap: 3px; padding-bottom: 26px; }
+  .bar-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
+  .bar-xlbl { font-size: 8px; color: #888; margin-top: 3px; transform: rotate(-30deg); transform-origin: top center; white-space: nowrap; }
+  .legend-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 6px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 2px; display: inline-block; }
+  .ownership-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .ownership-bar-bg { flex: 1; height: 10px; background: rgba(128,128,128,0.12); border-radius: 3px; overflow: hidden; }
+  .ownership-bar-fill { height: 100%; border-radius: 3px; transition: width 0.2s; }
+  .grid2 { display: grid; gap: 7px; }
+  .grid3 { display: grid; gap: 8px; }
+  .grid4 { display: grid; gap: 8px; }
+  .grid5 { display: grid; gap: 8px; }
+  .ref-info { font-size: 10px; color: #aaa; line-height: 1.5; margin-bottom: 14px; }
+  @media (max-width: 640px) {
+    .stage-cols { grid-template-columns: 1fr !important; }
+    .grid5 { grid-template-columns: repeat(2, 1fr) !important; }
+    .grid3 { grid-template-columns: 1fr !important; }
+    .grid4 { grid-template-columns: repeat(2, 1fr) !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script>
+const { useState } = React;
+
+const DIST = {
+  seed: {
+    label:"Seed", color:"#1D9E75", bg:"#E1F5EE", tc:"#0F6E56",
+    exp:2.2, pGt1:30, pGt5:11, pGt10:5,
+    dilution:0.20,
+    valNote:"EdTech median ~$12–16M pre-money (PitchBook 2024 / Carta 2025)",
+    b:[{lbl:"0x",lo:0,hi:0.001,p:.33},{lbl:"0.1–0.5x",lo:.1,hi:.5,p:.25},{lbl:"0.5–1x",lo:.5,hi:1,p:.12},
+       {lbl:"1–2x",lo:1,hi:2,p:.10},{lbl:"2–5x",lo:2,hi:5,p:.09},{lbl:"5–10x",lo:5,hi:10,p:.06},
+       {lbl:"10–20x",lo:10,hi:20,p:.035},{lbl:"20x+",lo:20,hi:60,p:.015}]
+  },
+  seriesA: {
+    label:"Series A", color:"#378ADD", bg:"#E6F1FB", tc:"#185FA5",
+    exp:2.7, pGt1:44, pGt5:15, pGt10:6,
+    dilution:0.17,
+    valNote:"EdTech avg ~$47M pre-money (Reach Capital 2023); AI EdTech ~$80M",
+    b:[{lbl:"0x",lo:0,hi:0.001,p:.20},{lbl:"0.1–0.5x",lo:.1,hi:.5,p:.22},{lbl:"0.5–1x",lo:.5,hi:1,p:.13},
+       {lbl:"1–2x",lo:1,hi:2,p:.15},{lbl:"2–5x",lo:2,hi:5,p:.15},{lbl:"5–10x",lo:5,hi:10,p:.09},
+       {lbl:"10–20x",lo:10,hi:20,p:.05},{lbl:"20x+",lo:20,hi:50,p:.01}]
+  },
+  seriesB: {
+    label:"Series B", color:"#7F77DD", bg:"#EEEDFE", tc:"#3C3489",
+    exp:2.7, pGt1:55, pGt5:13, pGt10:5,
+    dilution:0.17,
+    valNote:"EdTech typically $60–100M pre-money (Carta 2025 all-sector median: $119M)",
+    b:[{lbl:"0x",lo:0,hi:0.001,p:.12},{lbl:"0.1–0.5x",lo:.1,hi:.5,p:.18},{lbl:"0.5–1x",lo:.5,hi:1,p:.15},
+       {lbl:"1–2x",lo:1,hi:2,p:.22},{lbl:"2–5x",lo:2,hi:5,p:.20},{lbl:"5–10x",lo:5,hi:10,p:.08},
+       {lbl:"10–20x",lo:10,hi:20,p:.04},{lbl:"20x+",lo:20,hi:40,p:.01}]
+  },
+  seriesC: {
+    label:"Series C", color:"#BA7517", bg:"#FAEEDA", tc:"#854F0B",
+    exp:2.4, pGt1:65, pGt5:10, pGt10:3,
+    b:[{lbl:"0x",lo:0,hi:0.001,p:.07},{lbl:"0.1–0.5x",lo:.1,hi:.5,p:.14},{lbl:"0.5–1x",lo:.5,hi:1,p:.14},
+       {lbl:"1–2x",lo:1,hi:2,p:.26},{lbl:"2–5x",lo:2,hi:5,p:.24},{lbl:"5–10x",lo:5,hi:10,p:.10},
+       {lbl:"10–20x",lo:10,hi:20,p:.04},{lbl:"20x+",lo:20,hi:30,p:.01}]
+  }
+};
+
+const FO_STAGE = {seed:"seriesA",seriesA:"seriesB",seriesB:"seriesC"};
+const SURVIVAL = {seed:.67,seriesA:.78,seriesB:.87};
+const SURV_PCT = {seed:67,seriesA:78,seriesB:87};
+const SK = ["seed","seriesA","seriesB"];
+
+function sampleMOIC(k) {
+  const b=DIST[k].b; let cum=0,r=Math.random();
+  for(const bk of b){ cum+=bk.p; if(r<=cum) return bk.hi<=0.001?0:bk.lo+Math.random()*(bk.hi-bk.lo); }
+  return b[b.length-1].hi;
+}
+const fmt=(n,d=2)=>isNaN(n)||!isFinite(n)?"—":n.toFixed(d);
+const fmtX=n=>fmt(n)+"x";
+const fmtPct=n=>Math.round(n)+"%";
+const fmtM=n=>(isNaN(n)||!isFinite(n))?"—":"$"+fmt(n,1)+"M";
+
+function MetricCard({label,value,sub,vc,accent}){
+  return React.createElement("div",{className:"card",style:accent?{borderLeft:"3px solid "+accent}:{}},[
+    React.createElement("div",{key:"l",style:{fontSize:11,color:"#888",marginBottom:3,lineHeight:1.3}},label),
+    React.createElement("div",{key:"v",style:{fontSize:17,fontWeight:500,color:vc||"inherit"}},value),
+    sub&&React.createElement("div",{key:"s",style:{fontSize:10,color:"#aaa",marginTop:2,lineHeight:1.3}},sub)
+  ]);
+}
+
+function OwnershipPath({stageKey,preMoney,check}){
+  const d=DIST[stageKey];
+  const postM=preMoney+check/1000;
+  const entry=postM>0?(check/1000)/postM*100:0;
+  const roundNames=stageKey==="seed"?["After A","After B","After C"]:stageKey==="seriesA"?["After B","After C"]:["After C"];
+  const steps=[{label:"Entry",own:entry}];
+  let own=entry;
+  for(let i=0;i<roundNames.length;i++){ own=own*(1-d.dilution); steps.push({label:roundNames[i],own}); }
+  return React.createElement("div",null,[
+    React.createElement("div",{key:"hdr",style:{fontSize:10,color:"#aaa",marginBottom:6}},
+      "~"+Math.round(d.dilution*100)+"% dilution/round (Carta benchmark)"),
+    ...steps.map((s,i)=>React.createElement("div",{key:i,className:"ownership-row"},[
+      React.createElement("div",{key:"lbl",style:{fontSize:10,color:"#888",minWidth:72}},s.label),
+      React.createElement("div",{key:"bar",className:"ownership-bar-bg"},
+        React.createElement("div",{className:"ownership-bar-fill",style:{
+          width:(s.own/entry*100)+"%",
+          background:i===0?d.color+"cc":"#BA7517"+(Math.round(255*(0.8-i*0.15)).toString(16).padStart(2,"0"))
+        }})
+      ),
+      React.createElement("div",{key:"val",style:{fontSize:11,fontWeight:i===0?500:400,color:i===0?d.color:"#888",minWidth:34,textAlign:"right"}},fmt(s.own,1)+"%")
+    ]))
+  ]);
+}
+
+function StageCol({sk,state,onChange}){
+  const d=DIST[sk]; const foD=DIST[FO_STAGE[sk]];
+  const foN=Math.round(state.n*state.foR/100);
+  const postM=state.preMoney+state.check/1000;
+  const entryOwn=postM>0?(state.check/1000)/postM*100:0;
+  function handleOwnSlider(v){
+    if(v<=0||v>=100) return;
+    const post=state.preMoney/(1-v/100);
+    const chk=Math.round((post-state.preMoney)*1000/50)*50;
+    onChange({...state,check:Math.max(50,chk)});
+  }
+  return React.createElement("div",{className:"stage-card"},[
+    React.createElement("div",{key:"hdr",style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},[
+      React.createElement("span",{key:"pill",className:"pill",style:{background:d.bg,color:d.tc}},d.label),
+      React.createElement("span",{key:"exp",style:{fontSize:10,color:"#aaa"}},"Exp. MOIC: "+d.exp.toFixed(1)+"x")
+    ]),
+    React.createElement("div",{key:"sl",className:"section-label"},"Deal terms"),
+    React.createElement("div",{key:"ni",style:{marginBottom:8}},[
+      React.createElement("label",{key:"l",className:"field-label"},"# investments"),
+      React.createElement("input",{key:"i",type:"number",value:state.n,min:0,max:60,step:1,onChange:e=>onChange({...state,n:parseInt(e.target.value)||0})})
+    ]),
+    React.createElement("div",{key:"pm",style:{marginBottom:8}},[
+      React.createElement("div",{key:"row",style:{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:3}},[
+        React.createElement("span",{key:"l",className:"field-label",style:{margin:0}},"Pre-money valuation ($M)"),
+      ]),
+      React.createElement("div",{key:"note",className:"field-note",style:{marginBottom:3}},d.valNote),
+      React.createElement("input",{key:"i",type:"number",value:state.preMoney,min:1,max:2000,step:1,onChange:e=>onChange({...state,preMoney:parseFloat(e.target.value)||0})})
+    ]),
+    React.createElement("div",{key:"chk",style:{marginBottom:8}},[
+      React.createElement("label",{key:"l",className:"field-label"},"Check size ($K)"),
+      React.createElement("input",{key:"i",type:"number",value:state.check,min:50,max:50000,step:50,onChange:e=>onChange({...state,check:parseFloat(e.target.value)||0})})
+    ]),
+    React.createElement("div",{key:"own",style:{marginBottom:10}},[
+      React.createElement("div",{key:"row",style:{display:"flex",justifyContent:"space-between",marginBottom:2}},[
+        React.createElement("span",{key:"l",className:"field-label",style:{margin:0}},"Entry ownership %"),
+        React.createElement("span",{key:"v",style:{fontSize:14,fontWeight:500,color:d.color}},fmt(entryOwn,1)+"%")
+      ]),
+      React.createElement("div",{key:"note",className:"field-note",style:{marginBottom:3}},
+        "Post-money: $"+fmt(postM,1)+"M  ·  drag to adjust check size"),
+      React.createElement("input",{key:"s",type:"range",min:1,max:40,step:0.5,value:Math.round(entryOwn*10)/10,
+        style:{width:"100%",accentColor:d.color},
+        onChange:e=>handleOwnSlider(parseFloat(e.target.value))})
+    ]),
+    React.createElement("div",{key:"fo",className:"fo-divider"},[
+      React.createElement("div",{key:"lbl",className:"section-label"},"Follow-on → "+foD.label),
+      React.createElement("div",{key:"for",style:{marginBottom:10}},[
+        React.createElement("div",{key:"row",style:{display:"flex",justifyContent:"space-between",marginBottom:2}},[
+          React.createElement("span",{key:"l",className:"field-label",style:{margin:0}},"Follow-on rate"),
+          React.createElement("span",{key:"v",style:{fontSize:14,fontWeight:500,color:"#BA7517"}},state.foR+"%")
+        ]),
+        React.createElement("div",{key:"note",className:"field-note",style:{marginBottom:3}},
+          foN+" of "+state.n+" companies  ·  $"+((foN*state.foC)/1000).toFixed(1)+"M reserved"),
+        React.createElement("input",{key:"s",type:"range",min:0,max:100,step:5,value:state.foR,
+          style:{width:"100%",accentColor:"#BA7517"},
+          onChange:e=>onChange({...state,foR:parseInt(e.target.value)})})
+      ]),
+      React.createElement("div",{key:"fochk",style:{marginBottom:10}},[
+        React.createElement("label",{key:"l",className:"field-label"},"Follow-on check ($K)"),
+        React.createElement("input",{key:"i",type:"number",value:state.foC,min:0,max:30000,step:100,onChange:e=>onChange({...state,foC:parseFloat(e.target.value)||0})})
+      ])
+    ]),
+    React.createElement("div",{key:"dil",className:"fo-divider"},[
+      React.createElement("div",{key:"lbl",className:"section-label"},"Ownership dilution path"),
+      React.createElement(OwnershipPath,{key:"op",stageKey:sk,preMoney:state.preMoney,check:state.check})
+    ])
+  ]);
+}
+
+function DistBar({sk,height}){
+  const d=DIST[sk]; const maxP=Math.max(...d.b.map(b=>b.p)); const H=height||130;
+  return React.createElement("div",{className:"bar-wrap",style:{height:H+26}},[
+    ...d.b.map((b,i)=>React.createElement("div",{key:i,className:"bar-item"},[
+      b.p>0.01&&React.createElement("div",{key:"pct",style:{fontSize:9,color:"#888",marginBottom:1}},Math.round(b.p*100)+"%"),
+      React.createElement("div",{key:"bar",title:b.lbl+": "+Math.round(b.p*100)+"% of investments",
+        style:{width:"100%",height:(b.p/maxP)*H,background:d.color+"99",borderRadius:"3px 3px 0 0",minHeight:b.p>0?1:0}}),
+      React.createElement("div",{key:"lbl",className:"bar-xlbl"},b.lbl)
+    ]))
+  ]);
+}
+
+function CompareBar(){
+  const maxP=Math.max(...SK.flatMap(k=>DIST[k].b.map(b=>b.p))); const H=120;
+  return React.createElement("div",{className:"bar-wrap",style:{height:H+26}},[
+    ...DIST.seed.b.map((_,bi)=>React.createElement("div",{key:bi,className:"bar-item"},[
+      ...SK.map(k=>React.createElement("div",{key:k,
+        style:{width:"100%",height:(DIST[k].b[bi].p/maxP)*H,background:DIST[k].color+"99",
+          borderRadius:k==="seed"?"2px 2px 0 0":0,minHeight:DIST[k].b[bi].p>0?1:0}})),
+      React.createElement("div",{key:"lbl",className:"bar-xlbl"},DIST.seed.b[bi].lbl)
+    ]))
+  ]);
+}
+
+function Histogram({data,labels,colors}){
+  const max=Math.max(...data,1);
+  return React.createElement("div",null,[
+    React.createElement("div",{key:"bars",className:"bar-wrap",style:{height:160+26}},[
+      ...data.map((v,i)=>React.createElement("div",{key:i,className:"bar-item"},[
+        v>0&&React.createElement("div",{key:"pct",style:{fontSize:9,color:"#888",marginBottom:1}},v+"%"),
+        React.createElement("div",{key:"bar",style:{width:"100%",height:(v/max)*140,background:colors[i],borderRadius:"3px 3px 0 0",minHeight:v>0?1:0}}),
+        React.createElement("div",{key:"lbl",className:"bar-xlbl"},labels[i])
+      ]))
+    ]),
+    React.createElement("div",{key:"legend",className:"legend-row"},
+      [["#E24B4A99","< 1x (loss)"],["#EF9F2799","1–2x"],["#1D9E7599","2–5x"],["#378ADD99","5x+"]].map(([c,l])=>
+        React.createElement("span",{key:l,style:{display:"flex",alignItems:"center",gap:4,fontSize:11,color:"#888"}},[
+          React.createElement("span",{key:"d",className:"legend-dot",style:{background:c}}),l
+        ])
+      )
+    )
+  ]);
+}
+
+function runMC(stages){
+  const {seed,seriesA,seriesB}=stages;
+  const initK=seed.n*seed.check+seriesA.n*seriesA.check+seriesB.n*seriesB.check;
+  if(!initK) return null;
+  const RUNS=2000; const res=[],foArr=[],winArr=[];
+  for(let i=0;i<RUNS;i++){
+    let iR=0,fR=0,fU=0,w=0;
+    for(let j=0;j<seed.n;j++){const m=sampleMOIC("seed");iR+=m*seed.check;if(m>=5)w++;if(seed.foR>0&&Math.random()*100<seed.foR&&Math.random()<SURVIVAL.seed){fR+=sampleMOIC("seriesA")*seed.foC;fU+=seed.foC;}}
+    for(let j=0;j<seriesA.n;j++){const m=sampleMOIC("seriesA");iR+=m*seriesA.check;if(m>=5)w++;if(seriesA.foR>0&&Math.random()*100<seriesA.foR&&Math.random()<SURVIVAL.seriesA){fR+=sampleMOIC("seriesB")*seriesA.foC;fU+=seriesA.foC;}}
+    for(let j=0;j<seriesB.n;j++){const m=sampleMOIC("seriesB");iR+=m*seriesB.check;if(m>=5)w++;if(seriesB.foR>0&&Math.random()*100<seriesB.foR&&Math.random()<SURVIVAL.seriesB){fR+=sampleMOIC("seriesC")*seriesB.foC;fU+=seriesB.foC;}}
+    const tot=initK+fU;
+    res.push(tot>0?(iR+fR)/tot:0);
+    foArr.push(fU); winArr.push(w);
+  }
+  res.sort((a,b)=>a-b);
+  const pct=p=>res[Math.floor(RUNS*p)];
+  const bins=[0,.5,1,1.5,2,2.5,3,4,5,7,10,15];
+  const cts=new Array(bins.length-1).fill(0);
+  for(const r of res){for(let i=0;i<bins.length-1;i++){if(r>=bins[i]&&r<bins[i+1]){cts[i]++;break;}}}
+  return{
+    p10:pct(.10),p25:pct(.25),p50:pct(.50),p75:pct(.75),p90:pct(.90),
+    pgt1:Math.round(res.filter(r=>r>1).length/RUNS*100),
+    pgt2:Math.round(res.filter(r=>r>2).length/RUNS*100),
+    pgt3:Math.round(res.filter(r=>r>3).length/RUNS*100),
+    avgWin:(winArr.reduce((a,b)=>a+b,0)/RUNS).toFixed(1),
+    avgFo:(foArr.reduce((a,b)=>a+b,0)/RUNS/1000).toFixed(1),
+    initK,
+    hist:{
+      data:cts.map(c=>Math.round(c/RUNS*100)),
+      labels:bins.slice(0,-1).map((b,i)=>b+"–"+bins[i+1]+"x"),
+      colors:cts.map((_,i)=>{const m=(bins[i]+bins[i+1])/2;return m<1?"#E24B4A99":m<2?"#EF9F2799":m<4?"#1D9E7599":"#378ADD99";})
+    }
+  };
+}
+
+const DEFAULT={
+  seed:    {n:15,preMoney:12, check:500,  foR:35,foC:750 },
+  seriesA: {n:10,preMoney:47, check:1500, foR:30,foC:2000},
+  seriesB: {n:5, preMoney:80, check:3000, foR:20,foC:4000},
+};
+
+function App(){
+  const [tab,setTab]=useState("builder");
+  const [distTab,setDistTab]=useState("seed");
+  const [stages,setStages]=useState(DEFAULT);
+  const [sim,setSim]=useState(null);
+  const [running,setRunning]=useState(false);
+
+  function setStage(k,v){setStages(s=>({...s,[k]:v}));setSim(null);}
+
+  const der=(()=>{
+    const {seed,seriesA,seriesB}=stages;
+    const sfN=Math.round(seed.n*seed.foR/100),afN=Math.round(seriesA.n*seriesA.foR/100),bfN=Math.round(seriesB.n*seriesB.foR/100);
+    const initK=(seed.n*seed.check+seriesA.n*seriesA.check+seriesB.n*seriesB.check)/1000;
+    const foK=(sfN*seed.foC+afN*seriesA.foC+bfN*seriesB.foC)/1000;
+    const totK=initK+foK;
+    const wI=initK*1000;
+    const wtdI=wI>0?(seed.n*seed.check/wI*DIST.seed.exp+seriesA.n*seriesA.check/wI*DIST.seriesA.exp+seriesB.n*seriesB.check/wI*DIST.seriesB.exp):0;
+    const wA=totK*1000;
+    const sfK=sfN*seed.foC,afK=afN*seriesA.foC,bfK=bfN*seriesB.foC;
+    const wtdA=wA>0?(seed.n*seed.check*DIST.seed.exp+seriesA.n*seriesA.check*DIST.seriesA.exp+seriesB.n*seriesB.check*DIST.seriesB.exp+sfK*DIST.seriesA.exp+afK*DIST.seriesB.exp+bfK*DIST.seriesC.exp)/wA:0;
+    return{initK,foK,totK,totComp:seed.n+seriesA.n+seriesB.n,res:initK>0?(foK/initK*100).toFixed(0)+"%":"—",wtdI,wtdA};
+  })();
+
+  function handleRunMC(){
+    setRunning(true);
+    setTimeout(()=>{setSim(runMC(stages));setRunning(false);},80);
+  }
+
+  const navBtn=(k,l)=>React.createElement("button",{key:k,className:tab===k?"active":"",onClick:()=>setTab(k),style:{marginRight:4,marginBottom:4}},l);
+  const dBtn=(k,l)=>React.createElement("button",{key:k,className:distTab===k?"active":"",onClick:()=>setDistTab(k),style:{fontSize:11,marginRight:4}},l);
+
+  return React.createElement("div",null,[
+    React.createElement("div",{key:"title",style:{marginBottom:16}},[
+      React.createElement("h1",{key:"h",style:{fontSize:18,fontWeight:500,marginBottom:4}},"EdTech / Future of Work — VC Portfolio Model"),
+      React.createElement("p",{key:"sub",style:{fontSize:11,color:"#888"}},"MOIC distributions · follow-on reserves · ownership dilution · Monte Carlo simulation")
+    ]),
+
+    React.createElement("div",{key:"nav",style:{display:"flex",flexWrap:"wrap",marginBottom:14}},
+      [["builder","Portfolio builder"],["distributions","MOIC distributions"],["ownership","Valuation & ownership"]].map(([k,l])=>navBtn(k,l))
+    ),
+
+    tab==="distributions"&&React.createElement("div",{key:"dist"},[
+      React.createElement("p",{key:"intro",style:{fontSize:11,color:"#888",lineHeight:1.6,marginBottom:12}},
+        "EdTech / Future of Work outcome probabilities by stage. Calibrated from PitchBook (~80% of seed investments return <1x), Hustle Fund stage risk data (65% early-stage return 0–1x), and EdTech sector outcomes (~60% failure rate). Expected values are means pulled up by rare outliers; medians typically run 30–50% lower."),
+      React.createElement("div",{key:"tabs",style:{display:"flex",flexWrap:"wrap",marginBottom:12}},
+        [...SK,"all"].map(k=>dBtn(k,k==="all"?"Compare all":DIST[k].label))),
+      distTab!=="all"&&React.createElement("div",{key:"meta",className:"grid4",style:{gridTemplateColumns:"repeat(4,1fr)",marginBottom:12}},
+        [["Exp. MOIC",DIST[distTab].exp.toFixed(1)+"x"],["P(>1x)",DIST[distTab].pGt1+"%"],["P(>5x)",DIST[distTab].pGt5+"%"],["P(>10x)",DIST[distTab].pGt10+"%"]].map(([l,v])=>
+          React.createElement(MetricCard,{key:l,label:l,value:v,vc:DIST[distTab].color})
+        )
+      ),
+      distTab==="all"?React.createElement("div",{key:"comp"},[
+        React.createElement("div",{key:"leg",style:{display:"flex",gap:10,marginBottom:8,flexWrap:"wrap"}},
+          SK.map(k=>React.createElement("span",{key:k,style:{display:"flex",alignItems:"center",gap:4,fontSize:11}},[
+            React.createElement("span",{key:"d",className:"legend-dot",style:{background:DIST[k].color}}),DIST[k].label
+          ]))),
+        React.createElement(CompareBar,{key:"cb"})
+      ]):React.createElement(DistBar,{key:"db",sk:distTab})
+    ]),
+
+    tab==="ownership"&&React.createElement("div",{key:"own"},[
+      React.createElement("p",{key:"intro",className:"ref-info"},
+        "Entry valuations and dilution from Reach Capital EdTech analysis, PitchBook 2024 annual report, and Carta 2025 benchmarks. Dilution rates: ~20% at Seed, ~17% at Series A and B. Adjust inputs in Portfolio Builder — values update here automatically."),
+      React.createElement("div",{key:"cards",style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10,marginBottom:16}},
+        SK.map(k=>{
+          const d=DIST[k],s=stages[k];
+          const postM=s.preMoney+s.check/1000;
+          const eOwn=postM>0?(s.check/1000)/postM*100:0;
+          return React.createElement("div",{key:k,className:"stage-card"},[
+            React.createElement("span",{key:"pill",className:"pill",style:{background:d.bg,color:d.tc}},d.label),
+            React.createElement("div",{key:"note",style:{fontSize:10,color:"#aaa",marginBottom:10,lineHeight:1.4}},d.valNote),
+            React.createElement("div",{key:"grid",className:"grid2",style:{gridTemplateColumns:"1fr 1fr",marginBottom:10}},
+              [["Pre-money","$"+s.preMoney+"M",null],["Check","$"+s.check+"K",null],["Entry own.",fmt(eOwn,1)+"%",d.color],["Post-money","$"+fmt(postM,1)+"M",null]].map(([l,v,vc])=>
+                React.createElement(MetricCard,{key:l,label:l,value:v,vc})
+              )
+            ),
+            React.createElement("div",{key:"sl",className:"section-label"},"Dilution path"),
+            React.createElement(OwnershipPath,{key:"op",stageKey:k,preMoney:s.preMoney,check:s.check})
+          ]);
+        })
+      ),
+      React.createElement("div",{key:"ref",className:"card"},[
+        React.createElement("div",{key:"lbl",className:"section-label"},"Benchmark reference — EdTech / FoW (2024–25)"),
+        React.createElement("div",{key:"scroll",style:{overflowX:"auto"}},
+          React.createElement("table",null,[
+            React.createElement("thead",{key:"th"},React.createElement("tr",null,
+              ["Stage","Pre-money (median)","Avg deal","Typical ownership","Dilution/round","Source"].map(h=>React.createElement("th",{key:h},h))
+            )),
+            React.createElement("tbody",{key:"tb"},
+              [["seed","Seed","$12–16M","$3–4M","8–20%","~20%","PitchBook 2024 / Reach Capital"],
+               ["seriesA","Series A","$47–50M","$10–15M","12–20%","~17%","Reach Capital 2023 EdTech"],
+               ["seriesB","Series B","$60–120M","$20–40M","8–15%","~17%","Carta 2025 / PitchBook"]
+              ].map(([sk,stage,...cols],ri)=>React.createElement("tr",{key:ri},[
+                React.createElement("td",{key:"s"},React.createElement("span",{style:{fontSize:11,padding:"1px 8px",borderRadius:99,background:DIST[sk].bg,color:DIST[sk].tc}},stage)),
+                ...cols.map((c,ci)=>React.createElement("td",{key:ci,style:{color:ci===cols.length-1?"#aaa":"inherit"}},c))
+              ]))
+            )
+          ])
+        )
+      ])
+    ]),
+
+    tab==="builder"&&React.createElement("div",{key:"builder"},[
+      React.createElement("p",{key:"intro",style:{fontSize:11,color:"#888",lineHeight:1.6,marginBottom:14}},
+        "Set deal count, pre-money valuation, check size, and follow-on rate per stage. Entry ownership is calculated from your check and pre-money — drag the slider to adjust ownership and the check will back-calculate."),
+      React.createElement("div",{key:"stagecols",className:"stage-cols",style:{display:"grid",gridTemplateColumns:"repeat(3,minmax(0,1fr))",gap:10,marginBottom:16}},
+        SK.map(k=>React.createElement(StageCol,{key:k,sk:k,state:stages[k],onChange:v=>setStage(k,v)}))
+      ),
+      React.createElement("div",{key:"sl1",className:"section-label"},"Portfolio summary"),
+      React.createElement("div",{key:"sum1",className:"grid5",style:{gridTemplateColumns:"repeat(5,minmax(0,1fr))",marginBottom:8}},
+        [["Total companies",der.totComp,null,null],["Initial capital",fmtM(der.initK),null,null],
+         ["Follow-on capital",fmtM(der.foK),"#BA7517","#BA7517"],["Total deployed",fmtM(der.totK),null,null],
+         ["Reserve ratio",der.res,"follow-on / initial",null]].map(([l,v,vc,ac])=>
+          React.createElement(MetricCard,{key:l,label:l,value:v,vc,accent:ac||undefined})
+        )
+      ),
+      React.createElement("div",{key:"sum2",className:"grid3",style:{gridTemplateColumns:"repeat(3,minmax(0,1fr))",marginBottom:16}},
+        [["Wtd exp. MOIC (initial)",der.initK>0?fmtX(der.wtdI):"—",null],
+         ["Wtd exp. MOIC (all-in)",der.totK>0?fmtX(der.wtdA):"—",null],
+         ["Theoretical return",der.totK>0?fmtM(der.totK*der.wtdA):"—","expected value × total capital"]
+        ].map(([l,v,sub])=>React.createElement(MetricCard,{key:l,label:l,value:v,sub}))
+      ),
+      React.createElement("div",{key:"mc"},[
+        React.createElement("button",{key:"btn",onClick:handleRunMC,disabled:running,
+          style:{padding:"9px 22px",borderRadius:8,border:"0.5px solid rgba(128,128,128,.4)",fontSize:13}},
+          running?"Simulating…":"Run Monte Carlo (2,000 iterations) →"),
+        React.createElement("div",{key:"note",style:{fontSize:10,color:"#aaa",marginTop:4}},
+          "Each run draws outcomes per stage, fires follow-on checks stochastically for companies that clear the survival threshold.")
+      ]),
+      sim&&React.createElement("div",{key:"simres"},[
+        React.createElement("div",{key:"div",className:"divider"}),
+        React.createElement("div",{key:"sl2",className:"section-label"},"Simulation results — 2,000 portfolio runs"),
+        React.createElement("p",{key:"note",style:{fontSize:11,color:"#888",lineHeight:1.6,marginBottom:12}},
+          "Portfolio MOIC blends initial and follow-on checks. Follow-ons draw from the next stage's distribution. Survival gates: "+SURV_PCT.seed+"% seed, "+SURV_PCT.seriesA+"% Series A, "+SURV_PCT.seriesB+"% Series B."),
+        React.createElement("div",{key:"p",className:"grid5",style:{gridTemplateColumns:"repeat(5,minmax(0,1fr))",marginBottom:10}},
+          [["P10 — tough vintage",fmtX(sim.p10)],["P25 — below avg",fmtX(sim.p25)],["P50 — median",fmtX(sim.p50)],["P75 — above avg",fmtX(sim.p75)],["P90 — strong vintage",fmtX(sim.p90)]]
+            .map(([l,v])=>React.createElement(MetricCard,{key:l,label:l,value:v}))
+        ),
+        React.createElement("div",{key:"probs",className:"grid4",style:{gridTemplateColumns:"repeat(4,minmax(0,1fr))",marginBottom:10}},
+          [["P(portfolio > 1x)",fmtPct(sim.pgt1)],["P(portfolio > 2x)",fmtPct(sim.pgt2)],["P(portfolio > 3x)",fmtPct(sim.pgt3)],["Avg # 5x+ winners",sim.avgWin]]
+            .map(([l,v])=>React.createElement(MetricCard,{key:l,label:l,value:v}))
+        ),
+        React.createElement("div",{key:"extra",className:"grid3",style:{gridTemplateColumns:"repeat(3,minmax(0,1fr))",marginBottom:14}},
+          [["Median return",fmtM(sim.p50*sim.initK/1000),null],["Avg follow-on deployed","$"+sim.avgFo+"M","#BA7517"],["Initial capital basis",fmtM(sim.initK/1000),null]]
+            .map(([l,v,vc])=>React.createElement(MetricCard,{key:l,label:l,value:v,vc}))
+        ),
+        React.createElement(Histogram,{key:"hist",data:sim.hist.data,labels:sim.hist.labels,colors:sim.hist.colors}),
+        React.createElement("p",{key:"disc",style:{fontSize:11,color:"#888",marginTop:12,lineHeight:1.6}},
+          "Follow-on investments draw from the next stage's MOIC distribution — capturing the de-risking benefit of a surviving cohort while reflecting higher entry valuations. Actual follow-on capital deployed varies per simulation run.")
+      ])
+    ])
+  ]);
+}
+
+ReactDOM.render(React.createElement(App), document.getElementById("root"));
+</script>
+</body>
+</html>
